@@ -75,7 +75,7 @@ func NewInt160FromHex(hex string) (Int160, error) {
 	if len(hex) != 40 {
 		err := fmt.Errorf("invalid hexadecimal string length: got %d, want 40", len(hex))
 		logger.LogError(err.Error())
-		return nil, errors.New("invalid hexadecimal string")
+		return nil, err
 	}
 
 	byte20, err := hex2.DecodeString(hex)
