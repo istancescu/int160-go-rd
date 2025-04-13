@@ -20,12 +20,6 @@ type Int160 interface {
 	Clone() Int160
 }
 
-// Xor xor table
-// a 	b 	a^b
-// 1 	0 	1
-// 1 	1 	0
-// 0 	0 	0
-// 0 	1 	0
 func (i *int160) Xor(other Int160) Int160 {
 	o := other.(*int160)
 	var out int160
@@ -54,6 +48,10 @@ func (i *int160) String() string {
 	return fmt.Sprintf("%x", i.val)
 }
 
+func (i *int160) hexString() string {
+	return hex2.EncodeToString(i.val[:])
+}
+
 func (i *int160) IsZero() bool {
 	for _, v := range i.val {
 		if v != 0 {
@@ -75,16 +73,17 @@ func (i *int160) Clone() Int160 {
 
 func NewInt160FromHex(hex string) (Int160, error) {
 	if len(hex) != 40 {
-		logger.LogError(fmt.Sprintf("Invalid hexadecimal string: %s", hex))
+		err := fmt.Errorf("invalid hexadecimal string length: got %d, want 40", len(hex))
+		logger.LogError(err.Error())
 		return nil, errors.New("invalid hexadecimal string")
 	}
 
-	byte20 := make([]byte, 20)
 	byte20, err := hex2.DecodeString(hex)
 
 	if err != nil {
-		logger.LogError(fmt.Sprintf("Failure on conversion from %s: ", hex))
-		return nil, errors.New("conversion failure")
+		logErr := fmt.Errorf("failure decoding hex string %s: %w", hex, err)
+		logger.LogError(logErr.Error())
+		return nil, logErr
 	}
 
 	var result int160
@@ -101,4 +100,5 @@ func NewInt160FromBytes(bytes []byte) (Int160, error) {
 	var x int160
 	copy(x.val[:], bytes)
 	return &x, nil
+
 }
