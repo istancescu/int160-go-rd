@@ -7,53 +7,53 @@ import (
 	"github.com/istancescu/int160-go-rd/internal/logger"
 )
 
-type int160 struct {
-	val [20]byte
+type Int160 struct {
+	Val [20]byte
 }
 
-type Int160 interface {
+type IInt160 interface {
 	Bytes() [20]byte
-	Xor(other Int160) Int160
-	Equals(other Int160) bool
+	Xor(other Int160) *Int160
+	Equals(other *Int160) bool
 	String() string
 	IsZero() bool
 	Clone() Int160
 }
 
-func (i *int160) Xor(other Int160) Int160 {
-	o := other.(*int160)
-	var out int160
+func (i *Int160) Xor(other Int160) *Int160 {
+	var out Int160
 	for j := 0; j < 20; j++ {
-		out.val[j] = i.val[j] ^ o.val[j]
+		out.Val[j] = i.Val[j] ^ other.Val[j]
 	}
 	return &out
 }
 
-func (i *int160) Equals(other Int160) bool {
-	o := other.(*int160)
-
+func (i *Int160) Equals(other *Int160) bool {
+	if other == nil {
+		return false
+	}
 	for j := 0; j < 20; j++ {
-		if i.val[j] != o.val[j] {
+		if i.Val[j] != other.Val[j] {
 			return false
 		}
 	}
 	return true
 }
 
-func (i *int160) Bytes() [20]byte {
-	return i.val
+func (i *Int160) Bytes() [20]byte {
+	return i.Val
 }
 
-func (i *int160) String() string {
-	return fmt.Sprintf("%x", i.val)
+func (i *Int160) String() string {
+	return fmt.Sprintf("%x", i.Val)
 }
 
-func (i *int160) hexString() string {
-	return hex2.EncodeToString(i.val[:])
+func (i *Int160) hexString() string {
+	return hex2.EncodeToString(i.Val[:])
 }
 
-func (i *int160) IsZero() bool {
-	for _, v := range i.val {
+func (i *Int160) IsZero() bool {
+	for _, v := range i.Val {
 		if v != 0 {
 			return false
 		}
@@ -61,17 +61,17 @@ func (i *int160) IsZero() bool {
 	return true
 }
 
-func (i *int160) Clone() Int160 {
-	var cloned int160
+func (i *Int160) Clone() *Int160 {
+	var cloned Int160
 
 	for j := 0; j < 20; j++ {
-		cloned.val[j] = i.val[j]
+		cloned.Val[j] = i.Val[j]
 	}
 
 	return &cloned
 }
 
-func NewInt160FromHex(hex string) (Int160, error) {
+func NewInt160FromHex(hex string) (*Int160, error) {
 	if len(hex) != 40 {
 		err := fmt.Errorf("invalid hexadecimal string length: got %d, want 40", len(hex))
 		logger.LogError(err.Error())
@@ -86,19 +86,18 @@ func NewInt160FromHex(hex string) (Int160, error) {
 		return nil, logErr
 	}
 
-	var result int160
-	copy(result.val[:], byte20)
+	var result Int160
+	copy(result.Val[:], byte20)
 
 	return &result, nil
 }
 
-func NewInt160FromBytes(bytes []byte) (Int160, error) {
+func NewInt160FromBytes(bytes []byte) (*Int160, error) {
 	if len(bytes) != 20 {
 		logger.LogError("Failure on conversion from bytes, length not 20")
 		return nil, errors.New("conversion failure")
 	}
-	var x int160
-	copy(x.val[:], bytes)
+	var x Int160
+	copy(x.Val[:], bytes)
 	return &x, nil
-
 }
