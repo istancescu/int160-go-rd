@@ -285,7 +285,7 @@ func TestInt160_CommonPrefixLen(t *testing.T) {
 	int160 := Int160{
 		Val: [20]byte(make([]byte, 20)),
 	}
-	_, _ = int160.SetBit(true, 148)
+	_ = int160.SetBit(true, 148)
 
 	tests := []struct {
 		name  string
@@ -318,6 +318,62 @@ func TestInt160_CommonPrefixLen(t *testing.T) {
 			i := tt.input.a
 			if got := i.CommonPrefixLen(tt.input.b); got != tt.want {
 				t.Errorf("CommonPrefixLen() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt160_SetBit(t *testing.T) {
+	type fields struct {
+		current [20]byte
+		want    [20]byte
+	}
+	type args struct {
+		val bool
+		pos uint8
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"should replace current position 5",
+			fields{[20]byte{
+				0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00,
+			},
+				[20]byte{
+					0x00, 0x20, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0x00,
+				},
+			},
+			args{
+				true,
+				10,
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &Int160{
+				Val: tt.fields.current,
+			}
+			err := i.SetBit(tt.args.val, tt.args.pos)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SetBit() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if i.Val != tt.fields.want {
+				t.Errorf("SetBit() = %v, want %v", i.Val, tt.fields.want)
 			}
 		})
 	}

@@ -121,9 +121,9 @@ func (i *Int160) Less(other *Int160) bool {
 	return false
 }
 
-func (i *Int160) SetBit(val bool, pos uint8) (*Int160, error) {
+func (i *Int160) SetBit(val bool, pos uint8) error {
 	if pos >= 160 {
-		return nil, fmt.Errorf("can't set byte %t at pos %d \n", val, pos)
+		return fmt.Errorf("can't set byte %t at pos %d \n", val, pos)
 	}
 
 	byteIndex := pos / 8
@@ -137,7 +137,7 @@ func (i *Int160) SetBit(val bool, pos uint8) (*Int160, error) {
 		i.Val[byteIndex] &= ^mask
 	}
 
-	return i, nil
+	return nil
 }
 
 func (i *Int160) CommonPrefixLen(o *Int160) uint8 {
