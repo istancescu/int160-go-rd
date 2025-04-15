@@ -1,4 +1,4 @@
-package int160
+package main
 
 import (
 	"testing"

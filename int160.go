@@ -1,10 +1,9 @@
-package int160
+package main
 
 import (
 	hex2 "encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/istancescu/int160-go-rd/internal/logger"
 )
 
 type Int160 struct {
@@ -74,7 +73,7 @@ func (i *Int160) Clone() *Int160 {
 func NewInt160FromHex(hex string) (*Int160, error) {
 	if len(hex) != 40 {
 		err := fmt.Errorf("invalid hexadecimal string length: got %d, want 40", len(hex))
-		logger.LogError(err.Error())
+		LogError(err.Error())
 		return nil, err
 	}
 
@@ -82,7 +81,7 @@ func NewInt160FromHex(hex string) (*Int160, error) {
 
 	if err != nil {
 		logErr := fmt.Errorf("failure decoding hex string %s: %w", hex, err)
-		logger.LogError(logErr.Error())
+		LogError(logErr.Error())
 		return nil, logErr
 	}
 
@@ -94,7 +93,7 @@ func NewInt160FromHex(hex string) (*Int160, error) {
 
 func NewInt160FromBytes(bytes []byte) (*Int160, error) {
 	if len(bytes) != 20 {
-		logger.LogError("Failure on conversion from bytes, length not 20")
+		LogError("Failure on conversion from bytes, length not 20")
 		return nil, errors.New("conversion failure")
 	}
 	var x Int160
