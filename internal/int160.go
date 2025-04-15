@@ -17,10 +17,10 @@ type IInt160 interface {
 	Equals(other *Int160) bool
 	String() string
 	IsZero() bool
-	Clone() Int160
+	Clone() *Int160
 }
 
-func (i *Int160) Xor(other Int160) *Int160 {
+func (i *Int160) Xor(other *Int160) *Int160 {
 	var out Int160
 	for j := 0; j < 20; j++ {
 		out.Val[j] = i.Val[j] ^ other.Val[j]
@@ -100,4 +100,58 @@ func NewInt160FromBytes(bytes []byte) (*Int160, error) {
 	var x Int160
 	copy(x.Val[:], bytes)
 	return &x, nil
+}
+
+func Distance(a, b *Int160) (*Int160, error) {
+	if (a == nil) != (b == nil) {
+		return nil, fmt.Errorf("either a, or b pointer are null\n")
+	}
+	return a.Xor(b), nil
+}
+
+func (i *Int160) Less(other *Int160) bool {
+	for j := 0; j < 20; j++ {
+		if i.Val[j] < other.Val[j] {
+			return true
+		}
+		if i.Val[j] > other.Val[j] {
+			return false
+		}
+	}
+	return false
+}
+
+func (i *Int160) SetBit(val bool, pos uint8) (*Int160, error) {
+	if pos >= 160 {
+		return nil, fmt.Errorf("can't set byte %t at pos %d \n", val, pos)
+	}
+
+	byteIndex := pos / 8
+	bitIndex := 7 - (pos % 8)
+
+	mask := byte(1 << bitIndex)
+
+	if val {
+		i.Val[byteIndex] |= mask
+	} else {
+		i.Val[byteIndex] &= ^mask
+	}
+
+	return i, nil
+}
+
+func (i *Int160) CommonPrefixLen(o *Int160) uint8 {
+	xor := i.Xor(o)
+
+	for j := 0; j < 20; j++ {
+		if xor.Val[j] == 0 {
+			continue
+		}
+		for k := 0; k < 8; k++ {
+			if xor.Val[j]&(0x80>>k) != 0 {
+				return uint8(j*8 + k)
+			}
+		}
+	}
+	return 160
 }

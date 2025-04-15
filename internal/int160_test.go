@@ -127,7 +127,7 @@ func TestXor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.args.a.Xor(*tt.args.b))
+			assert.Equal(t, tt.want, tt.args.a.Xor(tt.args.b))
 		})
 	}
 }
@@ -273,5 +273,52 @@ func TestClone(t *testing.T) {
 	original.Val[0] = 255
 	if original.Val[0] == cloned.Val[0] {
 		t.Errorf("Clone() failed to create a deep copy, clone was modified when original was changed")
+	}
+}
+
+func TestInt160_CommonPrefixLen(t *testing.T) {
+	type input struct {
+		a *Int160
+		b *Int160
+	}
+
+	int160 := Int160{
+		Val: [20]byte(make([]byte, 20)),
+	}
+	_, _ = int160.SetBit(true, 148)
+
+	tests := []struct {
+		name  string
+		input input
+		want  uint8
+	}{
+		{
+			"should return len of 148, sec position is different",
+			input{
+				&Int160{
+					Val: [20]byte(make([]byte, 20)),
+				},
+				&int160,
+			},
+			148,
+		},
+		{
+			"should return len of 148, first position is different",
+			input{
+				&int160,
+				&Int160{
+					Val: [20]byte(make([]byte, 20)),
+				},
+			},
+			148,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := tt.input.a
+			if got := i.CommonPrefixLen(tt.input.b); got != tt.want {
+				t.Errorf("CommonPrefixLen() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
