@@ -10,15 +10,6 @@ type Int160 struct {
 	Val [20]byte
 }
 
-type IInt160 interface {
-	Bytes() [20]byte
-	Xor(other Int160) *Int160
-	Equals(other *Int160) bool
-	String() string
-	IsZero() bool
-	Clone() *Int160
-}
-
 func (i *Int160) Xor(other *Int160) *Int160 {
 	var out Int160
 	for j := 0; j < 20; j++ {

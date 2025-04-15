@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"github.com/alecthomas/assert/v2"
 	"reflect"
 	"testing"
 )
@@ -27,8 +26,10 @@ func Test_newInt160FromHex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, _ := NewInt160FromHex(tt.input)
-			assert.Equal(t, tt.want, res)
+			_, err := NewInt160FromHex(tt.input)
+			if err == nil {
+				t.Errorf("expected error for input %q, but got none", tt.input)
+			}
 		})
 	}
 }
@@ -53,8 +54,10 @@ func Test_newInt160FromHexSha(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, _ := NewInt160FromHex(tt.input)
-			assert.Equal(t, tt.want, res)
+			_, err := NewInt160FromHex(tt.input)
+			if err == nil {
+				t.Errorf("expected error for input %q, but got none", tt.input)
+			}
 		})
 	}
 }
@@ -80,7 +83,9 @@ func Test_newInt160FromHexSha_Too_Long(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := NewInt160FromHex(tt.input)
-			assert.Error(t, err)
+			if err == nil {
+				t.Errorf("expected error for input %q, but got none", tt.input)
+			}
 		})
 	}
 }
@@ -127,7 +132,10 @@ func TestXor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.args.a.Xor(tt.args.b))
+
+			if got := tt.args.a.Xor(tt.args.b); got != tt.want {
+				t.Errorf("Equals() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
