@@ -26,9 +26,8 @@ func Test_newInt160FromHex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewInt160FromHex(tt.input)
-			if err == nil {
-				t.Errorf("expected error for input %q, but got none", tt.input)
+			if got, _ := NewInt160FromHex(tt.input); got.Val != tt.want.Val {
+				t.Errorf("Equals() = %v, want %v", got, tt.want.Val)
 			}
 		})
 	}
@@ -54,9 +53,8 @@ func Test_newInt160FromHexSha(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewInt160FromHex(tt.input)
-			if err == nil {
-				t.Errorf("expected error for input %q, but got none", tt.input)
+			if got, _ := NewInt160FromHex(tt.input); got.Val != tt.want.Val {
+				t.Errorf("Equals() = %v, want %v", got, tt.want.Val)
 			}
 		})
 	}
@@ -132,9 +130,8 @@ func TestXor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			if got := tt.args.a.Xor(tt.args.b); got != tt.want {
-				t.Errorf("Equals() = %v, want %v", got, tt.want)
+			if got := tt.args.a.Xor(tt.args.b); got.Val != tt.want.Val {
+				t.Errorf("Equals() = %v, want %v", got.Val, tt.want.Val)
 			}
 		})
 	}
