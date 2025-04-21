@@ -1,4 +1,4 @@
-package main
+package int160
 
 import (
 	"bytes"
