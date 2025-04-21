@@ -1,4 +1,4 @@
-package main
+package int160
 
 import (
 	hex2 "encoding/hex"
@@ -92,6 +92,7 @@ func NewInt160FromBytes(bytes []byte) (*Int160, error) {
 	return &x, nil
 }
 
+// TODO: test this
 func Distance(a, b *Int160) (*Int160, error) {
 	if (a == nil) != (b == nil) {
 		return nil, fmt.Errorf("either a, or b pointer are null\n")
