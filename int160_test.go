@@ -2,6 +2,7 @@ package int160
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -381,5 +382,120 @@ func TestInt160_SetBit(t *testing.T) {
 				t.Errorf("SetBit() = %v, want %v", i.Val, tt.fields.want)
 			}
 		})
+	}
+}
+
+func TestDistance(t *testing.T) {
+	a := &Int160{Val: [20]byte{0x01, 0x02, 0xFF}}
+	b := &Int160{Val: [20]byte{0x10, 0x02, 0x0F}}
+
+	t.Run("equals xor", func(t *testing.T) {
+		got, err := Distance(a, b)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if want := a.Xor(b); got.Val != want.Val {
+			t.Errorf("Distance() = %v, want %v", got, want)
+		}
+	})
+
+	tests := []struct {
+		name string
+		a, b *Int160
+	}{
+		{"a nil", nil, b},
+		{"b nil", a, nil},
+		{"both nil", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Distance(tt.a, tt.b)
+			if !errors.Is(err, ErrNilInput) {
+				t.Errorf("error = %v, want ErrNilInput", err)
+			}
+			if got != nil {
+				t.Errorf("got %v, want nil", got)
+			}
+		})
+	}
+}
+
+func TestLess(t *testing.T) {
+	small := &Int160{Val: [20]byte{0x01}}
+	big := &Int160{Val: [20]byte{0x02}}
+	tests := []struct {
+		name string
+		a, b *Int160
+		want bool
+	}{
+		{"less", small, big, true},
+		{"greater", big, small, false},
+		{"equal", small, small.Clone(), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Less(tt.b); got != tt.want {
+				t.Errorf("Less() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestString_RoundTrip(t *testing.T) {
+	in := "e0c09862faafc7d2b315b5f8c14f9f38e2a3ac8b"
+	v, err := NewInt160FromHex(in)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := v.String(); got != in {
+		t.Errorf("String() = %q, want %q", got, in)
+	}
+}
+
+func TestNewInt160FromHex_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantLenEr bool
+	}{
+		{"invalid chars", "zz00000000000000000000000000000000000000", false},
+		{"too short", "2f00", true},
+		{"empty", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewInt160FromHex(tt.input)
+			if err == nil {
+				t.Fatalf("expected error, got %v", got)
+			}
+			if errors.Is(err, ErrInvalidLength) != tt.wantLenEr {
+				t.Errorf("errors.Is(ErrInvalidLength) = %v, want %v (err: %v)", !tt.wantLenEr, tt.wantLenEr, err)
+			}
+		})
+	}
+}
+
+func TestNewInt160FromBytes_InvalidLength(t *testing.T) {
+	for _, n := range []int{0, 19, 21} {
+		if _, err := NewInt160FromBytes(make([]byte, n)); !errors.Is(err, ErrInvalidLength) {
+			t.Errorf("len %d: error = %v, want ErrInvalidLength", n, err)
+		}
+	}
+}
+
+func TestSetBit_OutOfRange(t *testing.T) {
+	var i Int160
+	if err := i.SetBit(true, 160); err == nil {
+		t.Error("expected error for pos 160")
+	}
+	if !i.IsZero() {
+		t.Error("value modified on error")
+	}
+}
+
+func TestEquals_Nil(t *testing.T) {
+	var i Int160
+	if i.Equals(nil) {
+		t.Error("Equals(nil) = true, want false")
 	}
 }
