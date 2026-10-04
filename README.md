@@ -5,14 +5,12 @@ A 160-bit unsigned integer type for Go, stored as 20 big-endian bytes. Meant for
 ## Install
 
 ```
-go get github.com/istancescu/int160-go-rd
+go get github.com/istancescu/int160
 ```
 
 Needs Go 1.24+. No dependencies.
 
 ## Usage
-
-The import path doesn't match the package name, so alias it.
 
 ```go
 package main
@@ -22,7 +20,7 @@ import (
 	"fmt"
 	"log"
 
-	int160 "github.com/istancescu/int160-go-rd"
+	"github.com/istancescu/int160"
 )
 
 func main() {
