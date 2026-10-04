@@ -3,9 +3,11 @@
 package int160
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/bits"
 )
 
 // ErrInvalidLength is returned when an input does not have the required length.
@@ -59,8 +61,8 @@ func (i *Int160) Clone() *Int160 {
 	return &c
 }
 
-// NewInt160FromHex parses a 40-character hex string into an Int160.
-func NewInt160FromHex(s string) (*Int160, error) {
+// FromHex parses a 40-character hex string into an Int160.
+func FromHex(s string) (*Int160, error) {
 	if len(s) != 40 {
 		return nil, fmt.Errorf("%w: got %d hex chars, want 40", ErrInvalidLength, len(s))
 	}
@@ -76,8 +78,13 @@ func NewInt160FromHex(s string) (*Int160, error) {
 	return &result, nil
 }
 
-// NewInt160FromBytes creates an Int160 from exactly 20 bytes.
-func NewInt160FromBytes(b []byte) (*Int160, error) {
+// NewInt160FromHex parses a 40-character hex string into an Int160.
+//
+// Deprecated: Use FromHex.
+func NewInt160FromHex(s string) (*Int160, error) { return FromHex(s) }
+
+// FromBytes creates an Int160 from exactly 20 bytes.
+func FromBytes(b []byte) (*Int160, error) {
 	if len(b) != 20 {
 		return nil, fmt.Errorf("%w: got %d bytes, want 20", ErrInvalidLength, len(b))
 	}
@@ -85,6 +92,11 @@ func NewInt160FromBytes(b []byte) (*Int160, error) {
 	copy(x.Val[:], b)
 	return &x, nil
 }
+
+// NewInt160FromBytes creates an Int160 from exactly 20 bytes.
+//
+// Deprecated: Use FromBytes.
+func NewInt160FromBytes(b []byte) (*Int160, error) { return FromBytes(b) }
 
 // Distance returns the XOR distance between a and b, or ErrNilInput if either is nil.
 func Distance(a, b *Int160) (*Int160, error) {
@@ -94,17 +106,14 @@ func Distance(a, b *Int160) (*Int160, error) {
 	return a.Xor(b), nil
 }
 
+// Cmp returns -1, 0 or +1 if i is less than, equal to or greater than other.
+func (i *Int160) Cmp(other *Int160) int {
+	return bytes.Compare(i.Val[:], other.Val[:])
+}
+
 // Less reports whether i is numerically less than other.
 func (i *Int160) Less(other *Int160) bool {
-	for j := 0; j < 20; j++ {
-		if i.Val[j] < other.Val[j] {
-			return true
-		}
-		if i.Val[j] > other.Val[j] {
-			return false
-		}
-	}
-	return false
+	return i.Cmp(other) < 0
 }
 
 // SetBit sets the bit at pos to val. Position 0 is the most significant bit of
@@ -130,16 +139,9 @@ func (i *Int160) SetBit(val bool, pos uint8) error {
 
 // CommonPrefixLen returns the number of leading bits i and o have in common (160 if equal).
 func (i *Int160) CommonPrefixLen(o *Int160) uint8 {
-	xor := i.Xor(o)
-
 	for j := 0; j < 20; j++ {
-		if xor.Val[j] == 0 {
-			continue
-		}
-		for k := 0; k < 8; k++ {
-			if xor.Val[j]&(0x80>>k) != 0 {
-				return uint8(j*8 + k)
-			}
+		if x := i.Val[j] ^ o.Val[j]; x != 0 {
+			return uint8(j*8 + bits.LeadingZeros8(x))
 		}
 	}
 	return 160
