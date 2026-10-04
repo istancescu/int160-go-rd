@@ -1,15 +1,25 @@
+// Package int160 provides a fixed-size 160-bit unsigned integer, mostly useful
+// for Kademlia-style DHT node IDs and SHA-1 digests.
 package int160
 
 import (
-	hex2 "encoding/hex"
+	"encoding/hex"
 	"errors"
 	"fmt"
 )
 
+// ErrInvalidLength is returned when an input does not have the required length.
+var ErrInvalidLength = errors.New("int160: invalid length")
+
+// ErrNilInput is returned when a required pointer argument is nil.
+var ErrNilInput = errors.New("int160: nil input")
+
+// Int160 is a 160-bit value stored as 20 bytes in big-endian order.
 type Int160 struct {
 	Val [20]byte
 }
 
+// Xor returns the bitwise XOR of i and other.
 func (i *Int160) Xor(other *Int160) *Int160 {
 	var out Int160
 	for j := 0; j < 20; j++ {
@@ -18,30 +28,22 @@ func (i *Int160) Xor(other *Int160) *Int160 {
 	return &out
 }
 
+// Equals reports whether i and other hold the same value. It returns false if other is nil.
 func (i *Int160) Equals(other *Int160) bool {
-	if other == nil {
-		return false
-	}
-	for j := 0; j < 20; j++ {
-		if i.Val[j] != other.Val[j] {
-			return false
-		}
-	}
-	return true
+	return other != nil && i.Val == other.Val
 }
 
+// Bytes returns a copy of the underlying 20 bytes.
 func (i *Int160) Bytes() [20]byte {
 	return i.Val
 }
 
+// String returns the value as a 40-character lowercase hex string.
 func (i *Int160) String() string {
-	return fmt.Sprintf("%x", i.Val)
+	return hex.EncodeToString(i.Val[:])
 }
 
-func (i *Int160) hexString() string {
-	return hex2.EncodeToString(i.Val[:])
-}
-
+// IsZero reports whether all bits of i are zero.
 func (i *Int160) IsZero() bool {
 	for _, v := range i.Val {
 		if v != 0 {
@@ -51,29 +53,21 @@ func (i *Int160) IsZero() bool {
 	return true
 }
 
+// Clone returns an independent copy of i.
 func (i *Int160) Clone() *Int160 {
-	var cloned Int160
-
-	for j := 0; j < 20; j++ {
-		cloned.Val[j] = i.Val[j]
-	}
-
-	return &cloned
+	c := *i
+	return &c
 }
 
-func NewInt160FromHex(hex string) (*Int160, error) {
-	if len(hex) != 40 {
-		err := fmt.Errorf("invalid hexadecimal string length: got %d, want 40", len(hex))
-		LogError(err.Error())
-		return nil, err
+// NewInt160FromHex parses a 40-character hex string into an Int160.
+func NewInt160FromHex(s string) (*Int160, error) {
+	if len(s) != 40 {
+		return nil, fmt.Errorf("%w: got %d hex chars, want 40", ErrInvalidLength, len(s))
 	}
 
-	byte20, err := hex2.DecodeString(hex)
-
+	byte20, err := hex.DecodeString(s)
 	if err != nil {
-		logErr := fmt.Errorf("failure decoding hex string %s: %w", hex, err)
-		LogError(logErr.Error())
-		return nil, logErr
+		return nil, fmt.Errorf("int160: decode hex: %w", err)
 	}
 
 	var result Int160
@@ -82,24 +76,25 @@ func NewInt160FromHex(hex string) (*Int160, error) {
 	return &result, nil
 }
 
-func NewInt160FromBytes(bytes []byte) (*Int160, error) {
-	if len(bytes) != 20 {
-		LogError("Failure on conversion from bytes, length not 20")
-		return nil, errors.New("conversion failure")
+// NewInt160FromBytes creates an Int160 from exactly 20 bytes.
+func NewInt160FromBytes(b []byte) (*Int160, error) {
+	if len(b) != 20 {
+		return nil, fmt.Errorf("%w: got %d bytes, want 20", ErrInvalidLength, len(b))
 	}
 	var x Int160
-	copy(x.Val[:], bytes)
+	copy(x.Val[:], b)
 	return &x, nil
 }
 
-// TODO: test this
+// Distance returns the XOR distance between a and b, or ErrNilInput if either is nil.
 func Distance(a, b *Int160) (*Int160, error) {
-	if (a == nil) != (b == nil) {
-		return nil, fmt.Errorf("either a, or b pointer are null\n")
+	if a == nil || b == nil {
+		return nil, ErrNilInput
 	}
 	return a.Xor(b), nil
 }
 
+// Less reports whether i is numerically less than other.
 func (i *Int160) Less(other *Int160) bool {
 	for j := 0; j < 20; j++ {
 		if i.Val[j] < other.Val[j] {
@@ -112,9 +107,11 @@ func (i *Int160) Less(other *Int160) bool {
 	return false
 }
 
+// SetBit sets the bit at pos to val. Position 0 is the most significant bit of
+// Val[0]; it returns an error if pos is not in [0,160).
 func (i *Int160) SetBit(val bool, pos uint8) error {
 	if pos >= 160 {
-		return fmt.Errorf("can't set byte %t at pos %d \n", val, pos)
+		return fmt.Errorf("int160: bit position %d out of range [0,160)", pos)
 	}
 
 	byteIndex := pos / 8
@@ -131,6 +128,7 @@ func (i *Int160) SetBit(val bool, pos uint8) error {
 	return nil
 }
 
+// CommonPrefixLen returns the number of leading bits i and o have in common (160 if equal).
 func (i *Int160) CommonPrefixLen(o *Int160) uint8 {
 	xor := i.Xor(o)
 
