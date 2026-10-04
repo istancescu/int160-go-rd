@@ -507,3 +507,76 @@ func TestEquals_Nil(t *testing.T) {
 		t.Error("Equals(nil) = true, want false")
 	}
 }
+
+func TestFromHex(t *testing.T) {
+	got, err := FromHex("2f00000000000000000000000000000000000001")
+	if err != nil {
+		t.Fatalf("FromHex() error = %v", err)
+	}
+	var want Int160
+	want.Val[0], want.Val[19] = 0x2f, 0x01
+	if !got.Equals(&want) {
+		t.Errorf("FromHex() = %v, want %v", got, &want)
+	}
+
+	if _, err := FromHex("abcd"); !errors.Is(err, ErrInvalidLength) {
+		t.Errorf("FromHex(short) error = %v, want ErrInvalidLength", err)
+	}
+}
+
+func TestFromBytes(t *testing.T) {
+	b := make([]byte, 20)
+	b[0], b[19] = 0x2f, 0x01
+	got, err := FromBytes(b)
+	if err != nil {
+		t.Fatalf("FromBytes() error = %v", err)
+	}
+	if !bytes.Equal(got.Val[:], b) {
+		t.Errorf("FromBytes() = %v, want %x", got, b)
+	}
+
+	if _, err := FromBytes(make([]byte, 19)); !errors.Is(err, ErrInvalidLength) {
+		t.Errorf("FromBytes(19 bytes) error = %v, want ErrInvalidLength", err)
+	}
+}
+
+func TestCmp(t *testing.T) {
+	mk := func(first, last byte) *Int160 {
+		var x Int160
+		x.Val[0], x.Val[19] = first, last
+		return &x
+	}
+	tests := []struct {
+		name string
+		a, b *Int160
+		want int
+	}{
+		{"less", mk(0, 1), mk(0, 2), -1},
+		{"equal", mk(5, 5), mk(5, 5), 0},
+		{"greater", mk(2, 0), mk(1, 0), 1},
+		{"only last byte differs, less", mk(7, 1), mk(7, 2), -1},
+		{"only last byte differs, greater", mk(7, 2), mk(7, 1), 1},
+		{"first byte decides over later bytes, less", mk(1, 255), mk(2, 0), -1},
+		{"first byte decides over later bytes, greater", mk(2, 0), mk(1, 255), 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Cmp(tt.b); got != tt.want {
+				t.Errorf("Cmp() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCommonPrefixLen_MidByte(t *testing.T) {
+	var a, b Int160
+	if err := b.SetBit(true, 13); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.CommonPrefixLen(&b); got != 13 {
+		t.Errorf("CommonPrefixLen() = %d, want 13", got)
+	}
+	if got := a.CommonPrefixLen(&a); got != 160 {
+		t.Errorf("CommonPrefixLen(self) = %d, want 160", got)
+	}
+}
